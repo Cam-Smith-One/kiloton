@@ -1,0 +1,10 @@
+import * as THREE from 'three';
+const c = document.getElementById('kt-canvas');
+const r = new THREE.WebGLRenderer({ canvas: c, antialias: true });
+r.setSize(innerWidth, innerHeight, false);
+const s = new THREE.Scene(); s.background = new THREE.Color(0x335577);
+const cam = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.1, 100); cam.position.set(2, 2, 4); cam.lookAt(0, 0, 0);
+s.add(new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshNormalMaterial()));
+r.render(s, cam);
+const gl = r.getContext(); const e = gl.getExtension('WEBGL_debug_renderer_info');
+window.__KT_STATS = { webgl2: r.capabilities.isWebGL2, renderer: e ? gl.getParameter(e.UNMASKED_RENDERER_WEBGL) : '?', float: !!gl.getExtension('EXT_color_buffer_float') };

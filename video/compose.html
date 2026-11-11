@@ -1,0 +1,109 @@
+<!doctype html><meta charset="utf-8"><title>KILOTON explainer compositor</title>
+<style>
+:root{--bg:#0b0d10;--ink:#e9e4d8;--dim:#8b9099;--cyan:#49e0d2;--amber:#ffb23e;--red:#ff4b3a;--plate:rgba(11,13,16,.82);
+  --disp:"Inter Display","Inter","Helvetica Neue",Arial,sans-serif;--mono:"JetBrains Mono","DejaVu Sans Mono",ui-monospace,monospace;--body:"Inter","Helvetica Neue",Arial,sans-serif}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--ink);overflow:hidden}
+#stage{position:relative;width:1280px;height:720px;overflow:hidden;background:var(--bg);font-family:var(--body);-webkit-font-smoothing:antialiased}
+.layer{position:absolute;inset:0}
+#foot img{position:absolute;left:0;top:0;width:1280px;height:720px;display:block}
+/* condensed display type made from Inter Display by horizontal scaling */
+.disp{font-family:var(--disp);font-weight:800;text-transform:uppercase;display:inline-block;transform:scaleX(.74);transform-origin:left center;white-space:nowrap;line-height:1}
+.disp.c{transform-origin:center}.disp.r{transform-origin:right center}
+.mono{font-family:var(--mono);font-weight:500;text-transform:uppercase;letter-spacing:.22em;font-size:13px;color:var(--dim)}
+.cy{color:var(--cyan)}.am{color:var(--amber)}
+.scene{position:absolute;inset:0;display:none}
+/* grid backdrop for slides */
+.grid{position:absolute;inset:0;background:
+  linear-gradient(#ffffff08 1px,transparent 1px) 0 0/100% 40px,linear-gradient(90deg,#ffffff08 1px,transparent 1px) 0 0/40px 100%;
+  -webkit-mask-image:radial-gradient(ellipse at 50% 50%,#000 30%,transparent 78%)}
+.corner{position:absolute;width:18px;height:18px;border:2px solid #ffffff30}
+.corner.tl{left:28px;top:28px;border-right:0;border-bottom:0}.corner.tr{right:28px;top:28px;border-left:0;border-bottom:0}
+.corner.bl{left:28px;bottom:28px;border-right:0;border-top:0}.corner.br{right:28px;bottom:28px;border-left:0;border-top:0}
+.hdr{position:absolute;left:64px;top:52px}.hdr .mono{display:block;margin-bottom:10px}.hdr .disp{font-size:50px;letter-spacing:.04em}
+.foot{position:absolute;left:64px;right:64px;bottom:44px;display:flex;justify-content:space-between;align-items:baseline}
+/* title */
+#title .wrap,#end .wrap{position:absolute;inset:0;display:grid;place-content:center;justify-items:center;gap:20px}
+.logo{font:800 118px/1 var(--disp);letter-spacing:.3em;margin-right:-.3em;transform:scaleX(.78);color:var(--ink);white-space:nowrap}
+.tag{font:italic 500 25px/1 Georgia,"Bitstream Charter","DejaVu Serif",serif;letter-spacing:.06em;color:var(--amber)}
+.bar{width:420px;height:3px;background:#ffffff1c;overflow:hidden}.bar i{display:block;height:100%;background:var(--cyan);transform-origin:left}
+/* lower third */
+#lt{position:absolute;left:0;right:0;top:auto;bottom:0;height:300px;background:linear-gradient(transparent,rgba(11,13,16,.62) 36%,rgba(11,13,16,.95));display:none}
+#lt .in{position:absolute;left:64px;right:64px;bottom:44px}
+.cap-l{display:flex;align-items:center;gap:12px;margin-bottom:10px}.cap-l b{display:block;width:26px;height:3px;background:var(--cyan)}
+.cap-l .mono{color:var(--cyan);font-size:15px;font-weight:700;text-shadow:0 1px 5px #000c}
+.cap-h{font-size:46px;letter-spacing:.035em;color:var(--ink);width:135%}
+.cap-s{font:500 23px/1.35 var(--body);color:#d9d4c8;margin-top:10px;max-width:980px;text-shadow:0 1px 6px #000a}
+/* HUD-style plate caption */
+#plate{position:absolute;display:none;background:var(--plate);border-left:3px solid var(--cyan);padding:14px 20px 15px 18px;width:560px;box-shadow:0 0 0 1px #ffffff14}
+#plate .cap-h{font-size:34px}#plate .cap-s{font-size:19px;margin-top:7px;text-shadow:none}#plate .cap-l{margin-bottom:8px}#plate .cap-l .mono{font-size:12.5px}
+#black{background:#0b0d10;opacity:0;pointer-events:none}
+/* diagram */
+#built svg{position:absolute;inset:0}
+.node{position:absolute;transform:translate(-50%,-50%);padding:9px 0;width:132px;text-align:center;border:1px solid #ffffff2e;background:#12161b;font:600 17px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ink)}
+.node small{display:block;font:500 10.5px/1 var(--mono);letter-spacing:.16em;color:var(--dim);margin-top:6px}
+.node.late{border-color:#ffb23e88;border-style:dashed}.node.late small{color:var(--amber)}
+.core{position:absolute;left:640px;top:372px;transform:translate(-50%,-50%);width:330px;padding:20px 18px 18px;background:#0f1418;border:1.5px solid var(--cyan);text-align:center;box-shadow:0 0 40px #49e0d220}
+.core .mono{font-size:12px;color:var(--cyan);display:block;margin-bottom:10px}
+.core .big{font:700 23px/1.15 var(--mono);letter-spacing:.06em;color:var(--ink)}
+.core .l2{font:500 15.5px/1.5 var(--body);color:#cfcabd;margin-top:10px}
+.stat{font:500 15px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}.stat b{color:var(--ink);font-weight:600}
+.line2{font:500 23px/1.3 var(--body);color:#d9d4c8}
+/* review loop */
+.steps{position:absolute;left:64px;width:330px;top:156px;display:flex;flex-direction:column;gap:0}
+.step{border:1px solid #ffffff26;background:#12161b;padding:13px 16px 14px;position:relative}
+.step .mono{font-size:11.5px;display:block;margin-bottom:7px}.step span.t{font:600 19px/1.2 var(--body);color:var(--ink)}
+.arrow{height:26px;line-height:26px;padding-left:18px;color:var(--dim);font:500 17px/26px var(--mono);flex:none}
+.lead{margin-top:22px;font:500 18.5px/1.4 var(--body);color:#d9d4c8;border-left:3px solid var(--amber);padding-left:14px}
+.strip{position:absolute;left:440px;right:64px;top:156px;display:grid;grid-template-columns:1fr 1fr;gap:16px 18px}
+.shot{position:relative;overflow:visible}.shot .im{overflow:hidden;border:1px solid #ffffff2e;background:#000}.shot img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover}
+.shot .mono{display:block;margin-top:7px;font-size:11px;letter-spacing:.1em;text-transform:none;color:var(--dim)}
+.shot em{position:absolute;left:8px;top:8px;font:600 10.5px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;background:#0b0d10d0;color:var(--cyan);padding:5px 7px;font-style:normal}
+/* co-op */
+.pair{position:absolute;left:44px;right:44px;top:150px;display:flex;gap:16px;align-items:flex-start}
+.pair .shot{flex:none;width:446px}.pair .shot em{font-size:12px;padding:6px 9px}
+.pair .lob{width:268px}.pair .lob img{aspect-ratio:auto;height:402px;width:auto;max-width:none}
+.csub{position:absolute;left:328px;top:440px;right:44px}.csub .line2{display:block;font-size:26px;color:var(--ink)}.csub .stat{display:block;margin-top:14px}
+/* list card */
+.items{position:absolute;left:64px;top:350px;display:grid;grid-template-columns:repeat(3,360px);gap:14px 24px}
+.item{font:500 15px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ink);border-top:1px solid #ffffff26;padding-top:12px}.item i{color:var(--cyan);font-style:normal;margin-right:12px}
+.url{font:700 46px/1 var(--mono);letter-spacing:.04em;color:var(--cyan)}
+</style>
+<div id="stage">
+  <div class="layer" id="foot"><img id="fimg" alt=""></div>
+
+  <div class="scene" id="title"><div class="grid"></div><div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
+    <div class="wrap"><div class="logo" id="t-logo">KILOTON</div><div class="tag" id="t-tag">A game design by Cam Smith</div>
+      <div class="bar" id="t-bar" style="margin-top:14px"><i id="t-bari"></i></div><div class="mono" id="t-lab">Pouring concrete</div></div>
+    <div class="foot"><span class="mono" id="t-f1">How it was built</span><span class="mono" id="t-f2">Built with Claude over two days</span></div></div>
+
+  <div class="scene" id="built"><div class="grid"></div>
+    <div class="hdr"><span class="mono cy" id="b-k">How it was built</span><span class="disp" id="b-h">One contract. Twelve specialist agents.</span></div>
+    <svg id="b-svg" viewBox="0 0 1280 720"></svg><div id="b-nodes"></div>
+    <div class="core" id="b-core"><span class="mono">Lead</span><div class="big">Shared engine core<br>+ CONTRACT.md</div><div class="l2" id="b-l2">defines every module's API,<br>the event bus and file ownership</div></div>
+    <div class="foot"><span class="line2" id="b-line">Each agent owned one system. All of them worked in parallel.</span><span class="stat" id="b-stat"></span></div></div>
+
+  <div class="scene" id="loop"><div class="grid"></div>
+    <div class="hdr"><span class="mono cy">How it was built</span><span class="disp">Every agent reviewed its own screenshots.</span></div>
+    <div class="steps"><div id="l-steps" style="display:flex;flex-direction:column"></div><div class="lead" id="l-line">Then the lead integrated, play-tested by fast-forwarding the simulation, and published.</div></div><div class="strip" id="l-strip"></div>
+</div>
+
+  <div class="scene" id="list"><div class="grid"></div>
+    <div class="hdr" style="top:215px"><span class="mono cy">The game</span><span class="disp" style="font-size:72px">What makes it distinctive</span></div>
+    <div class="items" id="i-items"></div></div>
+
+  <div class="scene" id="coop"><div class="grid"></div>
+    <div class="hdr"><span class="mono cy">06 · Co-op</span><span class="disp">Four players. A browser tab each.</span></div>
+    <div class="pair"><div class="shot lob" id="c-l"><div class="im"><img src="../shots/ui-d1-lobby-host-1280.png"></div><span class="mono">Lobby · room code</span></div>
+      <div class="shot" id="c-a"><div class="im"><img src="../shots/net-02-host.png"></div><em>Host's view</em></div><div class="shot" id="c-b"><div class="im"><img src="../shots/net-02-client.png"></div><em>Client's view · same session</em></div></div>
+    <div class="csub"><span class="line2" id="c-line">Share a four-letter code. Destruction is kept in sync between players.</span><span class="stat" id="c-st">Screenshots from the game's own two-page network test</span></div></div>
+
+  <div class="scene" id="end"><div class="grid"></div><div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
+    <div class="wrap" style="gap:22px"><div class="logo" id="e-logo" style="font-size:84px">KILOTON</div>
+      <div class="mono" id="e-p" style="font-size:16px;color:var(--ink);margin-top:10px">Play it in your browser</div><div class="url" id="e-url">kiloton.assembll.xyz</div>
+      <div class="tag" id="e-tag" style="margin-top:16px">A game design by Cam Smith</div><div class="mono" id="e-b">Built with Claude over two days</div></div></div>
+
+  <div class="layer" id="lt"><div class="in"><div class="cap-l"><b></b><span class="mono" id="lt-l"></span></div><div class="disp cap-h" id="lt-h"></div><div class="cap-s" id="lt-s"></div></div></div>
+  <div id="plate"><div class="cap-l"><b></b><span class="mono" id="pl-l"></span></div><div class="disp cap-h" id="pl-h"></div><div class="cap-s" id="pl-s"></div></div>
+  <div class="layer" id="black"></div>
+</div>
+<script src="compose.js"></script>

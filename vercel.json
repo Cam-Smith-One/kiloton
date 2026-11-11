@@ -1,0 +1,18 @@
+{
+  "framework": null,
+  "installCommand": "npm install --omit=dev",
+  "buildCommand": "node build.mjs && node tools/web.mjs",
+  "outputDirectory": "public",
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
+    }
+  ],
+  "ignoreCommand": "git log -1 --pretty=%B | grep -q '\\[deploy\\]' && exit 1 || exit 0"
+}
