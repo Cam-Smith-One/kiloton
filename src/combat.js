@@ -45,7 +45,7 @@ function makeProj(slot) {
     slot, active: false, uid: 0,
     id: '', kind: '', pos: new THREE.Vector3(), vel: new THREE.Vector3(), team: 0, target: null,     // the public part
     k: 0, def: null, shooter: null, faction: 0, ignoreTeam: null, age: 0, life: 0, dist: 0, speed: 0, pen: 0, dmgMul: 1,
-    remote: false, seed: 1, trail: 0, rest: false, tHas: false, tx: 0, ty: 0, tz: 0, tvx: 0, tvy: 0, tvz: 0,
+    remote: false, seed: 1, trail: 0, rest: false, tHas: false, tx: 0, ty: 0, tz: 0, tvx: 0, tvy: 0, tvz: 0, lastR: 1e9, burst: false,
     ph1: 0, ph2: 0, w1: 0, w2: 0, roll: 0, spin: 0,
   };
 }
@@ -224,6 +224,9 @@ function guide(p, dt, sp) {
   const rx = tx - q.x, ry = ty - q.y, rz = tz - q.z, R2 = rx * rx + ry * ry + rz * rz;
   if (R2 < 1e-4) return;
   const R = Math.sqrt(R2), ux = rx / R, uy = ry / R, uz = rz / R;
+  // Near miss: once the range starts opening again close to the target, burst there instead of flying on.
+  if (R > p.lastR + 0.02 && p.lastR < def.prox * 2.2 + T.radius + T.height * 0.5) { p.burst = true; return; }
+  p.lastR = R;
   const vl = Math.sqrt(v.x * v.x + v.y * v.y + v.z * v.z) || 1, fx = v.x / vl, fy = v.y / vl, fz = v.z / vl;
   const vrx = p.tvx - v.x, vry = p.tvy - v.y, vrz = p.tvz - v.z;
   // LOS rotation  Ω = (r × vr) / R²,   closing speed Vc = -(r·vr)/R,   a = N·Vc·(Ω × r̂)
@@ -256,6 +259,10 @@ function step(p, dt) {
     let sp = p.speed;
     if (def.accel) { sp += def.accel * dt; if (sp > def.maxSpeed) sp = def.maxSpeed; p.speed = sp; }
     if (p.target) guide(p, dt, sp);
+    if (p.burst) {
+      p.burst = false; const T = p.target;
+      if (T && T.alive) { const l0 = Math.sqrt(v.x * v.x + v.y * v.y + v.z * v.z) || 1; hitEnt(p, T, q.x, q.y, q.z, v.x / l0, v.y / l0, v.z / l0); return; }
+    }
     let l = Math.sqrt(v.x * v.x + v.y * v.y + v.z * v.z) || 1, fx = v.x / l, fy = v.y / l, fz = v.z / l;
     if (def.wobble && !p.target) {                                                // slight corkscrew, bounded heading error
       let ux, uz; if (Math.abs(fy) < 0.99) { const h = 1 / Math.sqrt(fx * fx + fz * fz); ux = fz * h; uz = -fx * h; } else { ux = 1; uz = 0; }
@@ -455,7 +462,7 @@ const combat = {
     p.pos.set(ox, oy, oz); p.vel.set(dx * p.speed, dy * p.speed, dz * p.speed);
     p.target = def.turnRate && target && target.alive !== false ? target : null;
     p.age = 0; p.life = p.k === K_GRENADE ? def.fuse : def.life; p.dist = 0; p.pen = 0; p.trail = 0; p.rest = false; p.tHas = false;
-    p.tvx = p.tvy = p.tvz = 0;
+    p.tvx = p.tvy = p.tvz = 0; p.lastR = 1e9; p.burst = false;
     p.dmgMul = opts && opts.damageMul ? opts.damageMul : 1;
     p.remote = !!(opts && opts.remote);
     const seed = opts && opts.seed ? opts.seed >>> 0 : ((rng() * 4294967296) >>> 0) || 1;

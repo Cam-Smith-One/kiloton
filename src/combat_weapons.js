@@ -63,8 +63,8 @@ export const WEAPONS = {
   },
   seeker: {
     name: 'Seeker AA', label: 'SEEKER', kind: 'lock', proj: 'missile', faction: 0,
-    rate: 2.5, damage: 160, pen: { heavy: 0.4 }, speed: 40, accel: 100, maxSpeed: 105, spread: 0.04, pad: 0.3,
-    recharge: 6, shots: 2, burstGap: 0.14, turnRate: 3.0, navGain: 4, prox: 2.0, boost: 0.2,
+    rate: 2.5, damage: 160, pen: { heavy: 0.4 }, speed: 32, accel: 100, maxSpeed: 105, spread: 0.04, pad: 0.3,
+    recharge: 6, shots: 2, burstGap: 0.14, turnRate: 7.0, navGain: 4, prox: 3.0, boost: 0.06,
     lockTime: 0.6, lockRange: 180, lockCone: 0.3, maxLocks: 2, lockGround: false, lockAir: true,
     blast: { radius: 1.8, power: 80, damage: 30, dmgRadius: 3.0, kind: 'rocket', bury: 0 }, range: 320, life: 6,
   },
@@ -82,8 +82,8 @@ export const WEAPONS = {
   },
   skylance: {
     name: 'Skylance AA', label: 'SKYLANCE', key: 'Q', kind: 'lock', proj: 'missile', faction: 0,
-    rate: 2.5, damage: 250, pen: { heavy: 0.4 }, speed: 45, accel: 120, maxSpeed: 120, spread: 0.06, pad: 0.3,
-    recharge: 10, shots: 4, burstGap: 0.12, turnRate: 3.5, navGain: 4, prox: 2.2, boost: 0.22,
+    rate: 2.5, damage: 250, pen: { heavy: 0.4 }, speed: 36, accel: 120, maxSpeed: 120, spread: 0.06, pad: 0.3,
+    recharge: 10, shots: 4, burstGap: 0.12, turnRate: 7.5, navGain: 4, prox: 3.2, boost: 0.06,
     lockTime: 0.7, lockRange: 220, lockCone: 0.35, maxLocks: 4, lockGround: false, lockAir: true,
     blast: { radius: 2.5, power: 100, damage: 50, dmgRadius: 4.0, kind: 'rocket', bury: 0 }, range: 400, life: 7,
   },
